@@ -1,5 +1,5 @@
 /*
-    drawlite.js - a lightweight yet powerful graphics library based on Processing and p5
+    drawlite.dart - a lightweight yet powerful graphics library based on Processing and p5
 
     Credits:
         - PRNG is from https://github.com/davidbau/seedrandom under the MIT license (https://opensource.org/license/mit/)
@@ -26,6 +26,9 @@ import 'dart:ffi' as ffi;
 import 'dart:typed_data';
 
 import "package:dcanvas/dcanvas.dart";
+import 'package:dcanvas/backend/Window.dart';
+
+export 'package:dcanvas/backend/Window.dart' show Event, MouseEvent, KeyboardEvent, QuitEvent;
 
 final mathRandom = Math.Random();
 
@@ -394,6 +397,126 @@ String tostring(List<int> a) {
     return String.fromCharCodes(a);
 }
 
+class Vec3 {
+    num x, y, z;
+    Vec3(num this.x, num this.y, [num this.z=0]);
+
+    Vec3 fromArr(List<num> arr) {
+        return Vec3(arr[0], arr[1], arr[2]);
+    }
+
+    List<num> toArr(Vec3 v) {
+        return [v.x, v.y, v.z];
+    }
+
+    Vec3 clone(Vec3 v) {
+        return Vec3(v.x, v.y, v.z);
+    }
+
+    Vec3 add(Vec3 v1, Object v2) {
+        if (v2 is num) {
+            return Vec3(
+                v1.x + v2,
+                v1.y + v2,
+                v1.z + v2
+            );
+        } else if (v2 is Vec3) {
+            return Vec3(
+                v1.x + v2.x,
+                v1.y + v2.y,
+                v1.z + v2.z
+            );
+        }
+        throw "invalid type passed to Vec3.add";
+    }
+
+    Vec3 sub(Vec3 v1, Object v2) {
+        if (v2 is num) {
+            return Vec3(
+                v1.x - v2,
+                v1.y - v2,
+                v1.z - v2
+            );
+        } else if (v2 is Vec3) {
+            return Vec3(
+                v1.x - v2.x,
+                v1.y - v2.y,
+                v1.z - v2.z
+            );
+        }
+        throw "invalid type passed to Vec3.sub";
+    }
+
+    Vec3 mul(Vec3 v1, Object v2) {
+        if (v2 is num) {
+            return Vec3(
+                v1.x * v2,
+                v1.y * v2,
+                v1.z * v2
+            );
+        } else if (v2 is Vec3) {
+            return Vec3(
+                v1.x * v2.x,
+                v1.y * v2.y,
+                v1.z * v2.z
+            );
+        }
+        throw "invalid type passed to Vec3.mul";
+    }
+
+    Vec3 div(Vec3 v1, Object v2) {
+        if (v2 is num) {
+            return Vec3(
+                v1.x / v2,
+                v1.y / v2,
+                v1.z / v2
+            );
+        } else if (v2 is Vec3) {
+            return Vec3(
+                v1.x / v2.x,
+                v1.y / v2.y,
+                v1.z / v2.z
+            );
+        }
+        throw "invalid type passed to Vec3.div";
+    }
+
+    Vec3 neg(Vec3 v) {
+        return Vec3(
+            -v.x,
+            -v.y,
+            -v.z
+        );
+    }
+    
+    double mag(Vec3 v1) {
+        // benchmarks show that caching the values results in a 0.000008% performance boost
+        final x = v1.x, y = v1.y, z = v1.z;
+        return Math.sqrt(x * x + y * y + z * z);
+    }
+
+    Vec3 normalize(Vec3 v1) {
+        final x = v1.x, y = v1.y, z = v1.z;
+        final m = Math.sqrt(x * x + y * y + z * z);
+        return m > 0 ? Vec3(
+            v1.x / m,
+            v1.y / m,
+            v1.z / m
+         ) : v1;
+    }
+
+    num dot(Vec3 v1, Vec3 v2) {
+        return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
+    }
+
+    Vec3 cross(Vec3 v1, Vec3 v2) {
+        return Vec3(
+            v1.y * v2.z - v1.z * v2.y,
+            v1.z * v2.x - v1.x * v2.z,
+            v1.x * v2.y - v1.y * v2.x
+        );
+    }
+}
 
 class GetObject {
     late int width;
@@ -413,6 +536,67 @@ class GetObject {
     GetObject() {}
 }
 
+class EventCallbacks {
+    late void Function() focus;
+    late void Function() blur;
+
+    late void Function(MouseEvent) mousedown;
+    late void Function(MouseEvent) mouseup;
+    late void Function(MouseEvent) mousemove;
+
+    late void Function(KeyboardEvent) keydown;
+    late void Function(KeyboardEvent) keyup;
+}
+
+
+class DLImage {
+    late int width;
+    late int height;
+    late ImageData imageData;
+    late Canvas sourceImage;
+    late Context2D _ctx;
+
+    DLImage(Object src) {
+        if (src is Canvas) {
+            this.width = src.width;
+            this.height = src.height;
+            this.sourceImage = Canvas(this.width, this.height);
+            this._ctx = this.sourceImage.getContext("2d");
+            this._ctx.drawImage(src, 0, 0, this.width, this.height);
+            this.imageData = this._ctx.getImageData(0, 0, this.width, this.height);
+        } else if (src is ImageData) {
+            this.width = src.width;
+            this.height = src.height;
+            this.sourceImage = Canvas(this.width, this.height);
+            this._ctx = this.sourceImage.getContext("2d");
+            this._ctx.putImageData(src, 0, 0);
+            this.imageData = src;
+        }
+    }
+
+    updatePixels() {
+        this._ctx.putImageData(this.imageData, 0, 0);
+    }
+
+    mask(img) {
+        var fillPix = this.imageData.data,
+            imgData = img is DLImage ? img.imageData : img;
+
+        if (imgData.width == this.width && imgData.height == this.height) {
+            var shapePixs = imgData.data;
+            for (var i = 0, len = fillPix.length; i < len; i += 4) {
+                // fillPix[i] = (mathRandom.nextDouble() * 255).toInt();
+                // fillPix[i+1] = (mathRandom.nextDouble() * 255).toInt();
+                // fillPix[i+2] = (mathRandom.nextDouble() * 255).toInt();
+                fillPix[i+3] = 100;
+            }
+        } else {
+            throw "mask must have the same dimensions as image.";
+        }
+
+        this.updatePixels();
+    }
+}
 
 class Drawlite {
     static List<Drawlite> instances = [];
@@ -466,7 +650,15 @@ class Drawlite {
     late bool focused = false;
     // late int imageData = new ImageData(canvas.width, canvas.height);
 
-    Function? draw = null;
+    void Function()? draw = null;
+    void Function(MouseEvent)? mousePressed = null;
+    void Function(MouseEvent)? mouseReleased = null;
+    void Function(MouseEvent)? mouseMoved = null;
+    void Function(MouseEvent)? mouseDragged = null;
+    void Function(KeyboardEvent)? keyPressed = null;
+    void Function(KeyboardEvent)? keyReleased = null;
+
+    late EventCallbacks eventCallbacks;
 
     // LOCAL VARIABLE
     int curClrMode = RGB_;
@@ -474,7 +666,7 @@ class Drawlite {
     void DrawliteUpdate (Timer _) {
         if (this.draw != null) {
             try {
-                (this.draw as Function)();
+                (this.draw as void Function())();
             } catch (e, stacktrace) {
                 print(e.toString());
                 print(stacktrace);
@@ -495,7 +687,7 @@ class Drawlite {
         }
     }
 
-    Drawlite(Canvas canvas) {
+    Drawlite(Canvas canvas, [Function? callback]) {
         this.canvas = canvas;
         this.ctx = canvas.getContext("2d");
 
@@ -503,49 +695,53 @@ class Drawlite {
         this.height = this.canvas.height;
 
         updateDynamics();
-        // font(curFontName, curFontSize);
+        font(_curFontName, _curFontSize);
         strokeCap(ROUND);
 
         this._drawTimer = Timer.periodic(Duration(milliseconds: (1000 / this._targetFPS).round()), DrawliteUpdate);
 
-        // canvas.addEventListener("focus", () => {
-        //     D.focused = true;
-        // });
-        // canvas.addEventListener("blur", () => {
-        //     D.focused = false;
-        // });
+        void on_focus() {
+            this.focused = true;
+        }
+        void on_blur() {
+            this.focused = false;
+        }
 
-        // canvas.addEventListener("mousedown", e => {
-        //     D.mouseButton = [LEFT, CENTER, RIGHT][e.which - 1];
-        //     D.mouseIsPressed = true;
-        //     if (D.mousePressed) D.mousePressed(e);
-        // });
-        // canvas.addEventListener("mouseup", e => {
-        //     D.mouseIsPressed = false;
-        //     if (D.mouseReleased) D.mouseReleased(e);
-        // });
-        // canvas.addEventListener("mousemove", e => {
-        //     D.pmouseX = D.mouseX;
-        //     D.pmouseY = D.mouseY;
-        //     D.mouseX = e.clientX;
-        //     D.mouseY = e.clientY;
+        void on_mousedown(MouseEvent e) {
+            this.mouseButton = [LEFT, CENTER, RIGHT][e.which - 1];
+            this.mouseIsPressed = true;
+            if (this.mousePressed != null) this.mousePressed!(e);
+        }
+        void on_mouseup(MouseEvent e) {
+            this.mouseIsPressed = false;
+            if (this.mouseReleased != null) this.mouseReleased!(e);
+        }
+        void on_mousemove(MouseEvent e) {
+            this.pmouseX = this.mouseX;
+            this.pmouseY = this.mouseY;
+            this.mouseX = e.clientX;
+            this.mouseY = e.clientY;
+            if (this.mouseMoved != null) this.mouseMoved!(e);
+            if (this.mouseIsPressed && this.mouseDragged != null) this.mouseDragged!(e);
+        }
 
-        //     if (D.mouseMoved) D.mouseMoved(e);
-        //     if (D.mouseIsPressed && D.mouseDragged) D.mouseDragged(e);
-        // });
+        void on_keydown(KeyboardEvent e) {
+            this.keyIsPressed = true;
+            if (this.keyPressed != null) this.keyPressed!(e);
+        }
+        void on_keyup(KeyboardEvent e) {
+            this.keyIsPressed = false;
+            if (this.keyReleased != null) this.keyReleased!(e);
+        }
 
-        // if (typeof document !== "undefined") {
-        //     document.body.addEventListener("keydown", e => {
-        //         if (e.target === canvas) e.preventDefault();
-        //         D.keyIsPressed = true;
-        //         if (D.keyPressed) D.keyPressed(e);
-        //     });
-        //     document.body.addEventListener("keyup", e => {
-        //         if (e.target === canvas) e.preventDefault();
-        //         D.keyIsPressed = false;
-        //         if (D.keyReleased) D.keyReleased(e);
-        //     });
-        // }        
+        this.eventCallbacks = EventCallbacks();
+        eventCallbacks.focus = on_focus;
+        eventCallbacks.blur = on_blur;
+        eventCallbacks.mousedown = on_mousedown;
+        eventCallbacks.mouseup = on_mouseup;
+        eventCallbacks.mousemove = on_mousemove;
+        eventCallbacks.keydown = on_keydown;
+        eventCallbacks.keyup = on_keyup;
 
         // let ads = Drawlite.addons;
         // for (let i = 0; i < ads.length; i++) {
@@ -559,48 +755,10 @@ class Drawlite {
         //     }
         // }
 
-        // if (callback) callback(D);
+        if (callback != null) callback(this);
 
-        // Drawlite.instances.push(D);
+        Drawlite.instances.add(this);
     }
-
-    // class DLImage {
-    //     #ctx;
-    //     constructor(src) {
-    //         this.width = src.width;
-    //         this.height = src.height;
-    //         this.imageData = src;
-    //         this.sourceImage = document.createElement("canvas");
-
-    //         this.sourceImage.width = this.width;
-    //         this.sourceImage.height = this.height;
-    //         this.#ctx = this.sourceImage.getContext("2d");
-
-    //         if (src instanceof Image) {
-    //             this.#ctx.drawImage(src, 0, 0, this.width, this.height);
-    //         } else {
-    //             this.#ctx.putImageData(src, 0, 0);
-    //         }
-    //     }
-    //     updatePixels() {
-    //         this.#ctx.putImageData(this.imageData, 0, 0);
-    //     }
-    //     mask(img) {
-    //         let pixs = this.imageData.data,
-    //             imgData = img instanceof DLImage ? img.imageData : img;
-
-    //         if (imgData.width === this.width && imgData.height === this.height) {
-    //             let shapePixs = imgData.data;
-    //             for (var i = 3, len = pixs.length; i < len; i += 4) {
-    //                 pixs[i] = shapePixs[i];
-    //             }
-    //         } else {
-    //             throw "mask must have the same dimensions as image.";
-    //         }
-
-    //         this.updatePixels();
-    //     }
-    // }
 
     // let PERLIN_YWRAPB = 4,
     //     PERLIN_YWRAP = 1 << PERLIN_YWRAPB,
@@ -722,99 +880,6 @@ class Drawlite {
     //     }
     // }
 
-    // // vec3
-    // let vec3;
-    // {
-    //     const sqrt = Math.sqrt; // caching for faster lookup
-    //     vec3 = function(x, y, z) {
-    //         return {
-    //             x: x,
-    //             y: y,
-    //             z: z ?? 0
-    //         };
-    //     };
-    //     vec3.fromArr = arr => ({
-    //         x: arr[0],
-    //         y: arr[1],
-    //         z: arr[2]
-    //     });
-    //     vec3.toArr = v => ([v.x, v.y, v.z]);
-    //     vec3.clone = v => ({
-    //         x: v.x,
-    //         y: v.y,
-    //         z: v.z
-    //     });
-    //     vec3.add = (v1, v2) => {
-    //         return typeof v2 === 'number' ? {
-    //             x: v1.x + v2,
-    //             y: v1.y + v2,
-    //             z: v1.z + v2
-    //         } : {
-    //             x: v1.x + v2.x,
-    //             y: v1.y + v2.y,
-    //             z: v1.z + v2.z
-    //         };
-    //     };
-    //     vec3.sub = (v1, v2) => {
-    //         return typeof v2 === 'number' ? {
-    //             x: v1.x - v2,
-    //             y: v1.y - v2,
-    //             z: v1.z - v2
-    //         } : {
-    //             x: v1.x - v2.x,
-    //             y: v1.y - v2.y,
-    //             z: v1.z - v2.z
-    //         };
-    //     };
-    //     vec3.mul = (v1, v2) => {
-    //         return typeof v2 === 'number' ? {
-    //             x: v1.x * v2,
-    //             y: v1.y * v2,
-    //             z: v1.z * v2
-    //         } : {
-    //             x: v1.x * v2.x,
-    //             y: v1.y * v2.y,
-    //             z: v1.z * v2.z
-    //         };
-    //     };
-    //     vec3.div = (v1, v2) => {
-    //         return typeof v2 === 'number' ? {
-    //             x: v1.x / v2,
-    //             y: v1.y / v2,
-    //             z: v1.z / v2
-    //         } : {
-    //             x: v1.x / v2.x,
-    //             y: v1.y / v2.y,
-    //             z: v1.z / v2.z
-    //         };
-    //     };
-    //     vec3.neg = v => ({
-    //         x: -v.x,
-    //         y: -v.y,
-    //         z: -v.z
-    //     });
-    //     vec3.mag = v1 => {
-    //         // benchmarks show that caching the values results in a 0.000008% performance boost
-    //         let x = v1.x, y = v1.y, z = v1.z;
-    //         return sqrt(x * x + y * y + z * z);
-    //     };
-    //     vec3.normalize = v1 => {
-    //         let x = v1.x, y = v1.y, z = v1.z;
-    //         let m = sqrt(x * x + y * y + z * z);
-    //         return m > 0 ? {
-    //             x: v1.x / m,
-    //             y: v1.y / m,
-    //             z: v1.z / m
-    //         } : v1;
-    //     };
-    //     vec3.dot = (v1, v2) => (v1.x * v2.x + v1.y * v2.y + v1.z * v2.z);
-    //     vec3.cross = (v1, v2) => ({
-    //         x: v1.y * v2.z - v1.z * v2.y,
-    //         y: v1.z * v2.x - v1.x * v2.z,
-    //         z: v1.x * v2.y - v1.y * v2.x
-    //     });
-    // }
-
     // MORE LOCAL VARIABLES
     Timer? _drawTimer = null;
     num _targetFPS = 60;
@@ -882,17 +947,14 @@ class Drawlite {
     }
 
 
-    // // MORE STATIC VARIABLES
-    // let 
-    // ctx = canvas.getContext("2d"),
-
-    // size = (w, h) => {
+    // MORE STATIC VARIABLES
+    void size(num w, num h) {
     //     D.width = canvas.width = w;
     //     D.height = canvas.height = h;
     //     font(curFontName, curFontSize);
     //     D.imageData = ctx.getImageData(0, 0, D.width, D.height);
     //     updateDynamics();
-    // },
+    }
 
     void angleMode(int m) {
         _curAngleMode = m;
@@ -1260,52 +1322,57 @@ class Drawlite {
         endShape();
     }
 
-    // snip = (x, y, w, h) => {
-    //     if (x === undef) {
-    //         x = 0;
-    //         y = 0;
-    //         w = D.width;
-    //         h = D.height;
-    //     } else if (w === undef) {
-    //         w = 1;
-    //         h = 1;
-    //     }
+    Object snip([num? x, num? y, num? w, num? h]) {
+        if (x == null) {
+            x = 0;
+            y = 0;
+            w = this.width;
+            h = this.height;
+        } else if (w == null) {
+            w = 1;
+            h = 1;
+        }
 
-    //     let snipImgData = ctx.getImageData(x, y, w, h);
-    //     if (w === 1 && h === 1) {
-    //         let d = snipImgData.data;
-    //         return new Color(d[0], d[1], d[2], d[3]);
-    //     }
+        if (y == null || h == null) {
+            throw "Drawlite.snip y, h cannot be null";
+        }
 
-    //     return new DLImage(snipImgData);
-    // },
+        var snipImgData = ctx.getImageData(x, y, w, h);
+        if (w == 1 && h == 1) {
+            final d = snipImgData.data;
+            return new Color(d[0], d[1], d[2], d[3]);
+        }
+
+        return new DLImage(snipImgData);
+    }
 
     void imageMode(int mode) {
         _curImgMode = mode;
     }
 
-    // image = (img, x, y, w, h) => {
-    //     switch (curImgMode) {
-    //         case CENTER:
-    //             x -= w / 2;
-    //             y -= h / 2;
-    //             break;
-    //         case CORNERS:
-    //             w -= x;
-    //             h -= y;
-    //             break;
-    //     }
-    //     if (typeof img.sourceImage === "object") {
-    //         img = img.sourceImage;
-    //     } else if (typeof img.canvas === "object") {
-    //         img = img.canvas;
-    //     }
-    //     if (w === undef) {
-    //         ctx.drawImage(img, x, y);
-    //     } else {
-    //         ctx.drawImage(img, x, y, w, h);
-    //     }
-    // },
+    void image(Object img, num x, num y, [num? w, num? h]) {
+        if (img is DLImage) {
+            w = img.width;
+            h = img.height;
+            img = img.sourceImage;
+        } else if (img is Canvas) {
+            w = img.width;
+            h = img.height;
+        } else {
+            throw "Drawlite.image incorrect arguments recieved";
+        }
+        switch (_curImgMode) {
+            case CENTER_:
+                x -= w / 2;
+                y -= h / 2;
+                break;
+            case CORNERS_:
+                w -= x;
+                h -= y;
+                break;
+        }
+        ctx.drawImage(img as Canvas, x, y, w, h);
+    }
 
     // loadImage = (src, callback) => {
     //     let img = new Image();
@@ -1323,21 +1390,20 @@ class Drawlite {
         if (sz == null) {
             sz = _curFontSize;
         }
-        // ctx.font = loadFont(this.canvas.myRayLib, "OpenSans", sz);
         ctx.font = calcFontString(f, sz);
         _curFontName = f;
         _curFontSize = sz.toDouble();
         _curTxtLeading = sz * 1.2;
-        // _curTxtAscent = ctx.measureText('|').actualBoundingBoxAscent;
-        // _curTxtDescent = ctx.measureText('|').actualBoundingBoxDescent;
+        _curTxtAscent = ctx.measureText('|').actualBoundingBoxAscent;
+        _curTxtDescent = ctx.measureText('|').actualBoundingBoxDescent;
     }
 
     void textSize(num sz) {
         ctx.font = calcFontString(_curFontName, sz);
         _curFontSize = sz.toDouble();
         _curTxtLeading = sz * 1.2;
-        // _curTxtAscent = ctx.measureText('|').actualBoundingBoxAscent;
-        // _curTxtDescent = ctx.measureText('|').actualBoundingBoxDescent;
+        _curTxtAscent = ctx.measureText('|').actualBoundingBoxAscent;
+        _curTxtDescent = ctx.measureText('|').actualBoundingBoxDescent;
     }
 
     void textAlign(int xAlign, [int yAlign=BASELINE_]) {
@@ -1347,11 +1413,11 @@ class Drawlite {
 
     double textWidth(String str) {
         var width = 0.0;
-        // var arr = str.split(RegExp(r"/\r?\n/g"));
-        // for (var i = 0; i < arr.length; i++) {
-        //     var w = ctx.measureText(arr[i]).width;
-        //     if (w > width) width = w;
-        // }
+        var arr = str.split(RegExp(r'\r?\n'));
+        for (var i = 0; i < arr.length; i++) {
+            var w = ctx.measureText(arr[i]).width;
+            if (w > width) width = w;
+        }
         return width;
     }
 
@@ -1371,9 +1437,8 @@ class Drawlite {
 
     void text(dynamic tObj, num x, num y, [num? w, num? h]) {
         final fillClr = this._curFill;
-        final strokeClr = this._curStroke;
-        // if (fillClr != null)
-        //     ctx.fillStyle = Color(fillClr.r, fillClr.g, fillClr.b, fillClr.a);
+        if (fillClr != null)
+            ctx.fillStyle = CSSColor(fillClr.r, fillClr.g, fillClr.b, fillClr.a / 255);     
 
         String t;
         if (tObj == null) {
@@ -1479,7 +1544,7 @@ class Drawlite {
         _curRectMode = m;
     }
 
-    void rect(num x, num y, num w, num h, [num? r1, num?r2, num?r3, num?r4]) {
+    void rect(num x, num y, num w, num h, [num? r1, num? r2, num? r3, num? r4]) {
         final fillClr = this._curFill;
         final strokeClr = this._curStroke;
         if (fillClr != null)
@@ -1519,11 +1584,15 @@ class Drawlite {
             } else if (r4 == null) {
                 corners = [r1, r2, r3, 0];
             } else {
-                corners = [r1, r1, r1, r1];
+                corners = [r1, r2, r3, r4];
             }
-            ctx.roundRect(x, y, w, h, corners);
 
+            // TODO: figure out why I have to repeat this
+            ctx.roundRect(x, y, w, h, corners);
             if (fillClr != null) ctx.fill();
+
+            // must stroke before fill for some reason?
+            ctx.roundRect(x, y, w, h, corners);
             if (strokeClr != null) ctx.stroke();
         }
     }
@@ -1543,7 +1612,6 @@ class Drawlite {
         ctx.closePath();
 
         if (fillClr != null) ctx.fill();
-        print("STROKE ${ctx.strokeStyle}");
         if (strokeClr != null) ctx.stroke();
     }
 
@@ -1561,8 +1629,15 @@ class Drawlite {
         ctx.lineTo(x3, y3);
         ctx.lineTo(x4, y4);
         ctx.closePath();
-
         if (fillClr != null) ctx.fill();
+
+        // TODO: figure out why I have to repeat this
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.lineTo(x3, y3);
+        ctx.lineTo(x4, y4);
+        ctx.closePath();
         if (strokeClr != null) ctx.stroke();
     }
 
@@ -1595,15 +1670,20 @@ class Drawlite {
         if (strokeClr != null) ctx.stroke();
     }
 
-    // circle = (x, y, d) => {
-    //     curFill && (ctx.fillStyle = curFill.toString());
-    //     curStroke && (ctx.strokeStyle = curStroke.toString());
+    void circle(num x, num y, num d) {
+        final fillClr = this._curFill;
+        final strokeClr = this._curStroke;
+        if (fillClr != null)
+            ctx.fillStyle = CSSColor(fillClr.r, fillClr.g, fillClr.b, fillClr.a / 255);
+        if (strokeClr != null)
+            ctx.strokeStyle = CSSColor(strokeClr.r, strokeClr.g, strokeClr.b, strokeClr.a / 255);
 
-    //     ctx.beginPath();
-    //     ctx.arc(x, y, d / 2, 0, TWO_PI);
-    //     curFill && ctx.fill();
-    //     curStroke && ctx.stroke();
-    // },
+        ctx.beginPath();
+        ctx.arc(x, y, d / 2, 0, TWO_PI);
+
+        if (fillClr != null) ctx.fill();
+        if (strokeClr != null) ctx.stroke();
+    }
 
     void ellipseMode(int m) {
         _curEllipseMode = m;
@@ -1645,16 +1725,21 @@ class Drawlite {
         if (strokeClr != null) ctx.stroke();
     }
 
-    // bezier = (a, b, c, d, e, f, g, h) => {
-    //     curFill && (ctx.fillStyle = curFill.toString());
-    //     curStroke && (ctx.strokeStyle = curStroke.toString());
+    void bezier(num a, num b, num c, num d, num e, num f, num g, num h) {
+        final fillClr = this._curFill;
+        final strokeClr = this._curStroke;
+        if (fillClr != null)
+            ctx.fillStyle = CSSColor(fillClr.r, fillClr.g, fillClr.b, fillClr.a / 255);
+        if (strokeClr != null)
+            ctx.strokeStyle = CSSColor(strokeClr.r, strokeClr.g, strokeClr.b, strokeClr.a / 255);
 
-    //     ctx.beginPath();
-    //     ctx.moveTo(a, b);
-    //     ctx.bezierCurveTo(c, d, e, f, g, h);
-    //     curFill && ctx.fill();
-    //     curStroke && ctx.stroke();
-    // },
+        ctx.beginPath();
+        ctx.moveTo(a, b);
+        ctx.bezierCurveTo(c, d, e, f, g, h);
+
+        if (fillClr != null) ctx.fill();
+        if (strokeClr != null) ctx.stroke();
+    }
 
     GetObject get = GetObject();
 
@@ -1682,9 +1767,9 @@ class Drawlite {
         ctx.restore();
     }
 
-    // resetMatrix = () => {
-    //     ctx.resetTransform();
-    // },
+    void resetMatrix() {
+        ctx.resetTransform();
+    }
 
     void scale(num w, [num? h]) {
         if (h == null) {

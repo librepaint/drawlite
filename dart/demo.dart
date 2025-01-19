@@ -2,9 +2,9 @@
 // import 'package:dcanvas/backend/Backend.dart';
 
 import 'package:dcanvas/dcanvas.dart' show Canvas;
-import './drawlite.dart'
+import 'package:drawlite/drawlite.dart'
     show Color, Drawlite;
-import './dl.dart';
+import 'package:drawlite/dl.dart';
 
 void main() {
     var canvas = Canvas(400, 400);

@@ -30,7 +30,6 @@ late void Function(num w, [num? h]) scale;
 late void Function(dynamic tObj, num x, num y, [num? w, num? h]) text;
 late void Function(int xAlign, [int yAlign]) textAlign;
 late void Function(String f, [num? sz]) font;
-// final createFont = dl.createFont;
 late void Function(num w) strokeWeight;
 late double Function(String str) textWidth;
 late Color Function(num r, [num? g, num? b, num a]) color;
@@ -48,6 +47,15 @@ late void Function(num x1, num y1, num x2, num y2, num x3, num y3) triangle;
 late void Function(num x1, num y1, num x2, num y2, num x3, num y3, num x4, num y4) quad;
 late void Function(Object r, [num? g, num? b, num? a]) background;
 late void Function(int m) colorMode;
+late void Function() noLoop;
+late num Function() textAscent;
+late num Function() textDescent;
+late void Function() resetMatrix;
+late void Function(num a, num b, num c, num d, num e, num f, num g, num h) bezier;
+late void Function(num x, num y, num d) circle;
+late Color Function(Color c1, Color c2, num amt) lerpColor;
+late Object Function([num? x, num? y, num? w, num? h]) snip;
+late void Function(Object img, num x, num y, [num? w, num? h]) image;
 
 // get object
 late GetObject get;
