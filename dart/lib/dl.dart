@@ -16,6 +16,7 @@ late double Function(num a) cos;
 late double Function(num d) radians;
 late double Function([num a, num? b]) random;
 late num Function(num n) floor;
+late num Function(num n, num min, num max) constrain;
 
 // methods
 late void Function(Object r, [num? g, num? b, num? a]) fill;
@@ -56,6 +57,8 @@ late void Function(num x, num y, num d) circle;
 late Color Function(Color c1, Color c2, num amt) lerpColor;
 late Object Function([num? x, num? y, num? w, num? h]) snip;
 late void Function(Object img, num x, num y, [num? w, num? h]) image;
+late double Function([num? r]) frameRate;
+late void Function(int mode) imageMode;
 
 // get object
 late GetObject get;

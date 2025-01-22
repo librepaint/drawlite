@@ -185,13 +185,13 @@ var Drawlite = function (canvas, callback) {
             this.#ctx.putImageData(this.imageData, 0, 0);
         }
         mask(img) {
-            let pixs = this.imageData.data,
+            let fillPix = this.imageData.data,
                 imgData = img instanceof DLImage ? img.imageData : img;
 
             if (imgData.width === this.width && imgData.height === this.height) {
                 let shapePixs = imgData.data;
-                for (var i = 3, len = pixs.length; i < len; i += 4) {
-                    pixs[i] = shapePixs[i];
+                for (var i = 3, len = fillPix.length; i < len; i += 4) {
+                    fillPix[i+3] = shapePixs[i];
                 }
             } else {
                 throw "mask must have the same dimensions as image.";

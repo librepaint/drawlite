@@ -585,10 +585,7 @@ class DLImage {
         if (imgData.width == this.width && imgData.height == this.height) {
             var shapePixs = imgData.data;
             for (var i = 0, len = fillPix.length; i < len; i += 4) {
-                // fillPix[i] = (mathRandom.nextDouble() * 255).toInt();
-                // fillPix[i+1] = (mathRandom.nextDouble() * 255).toInt();
-                // fillPix[i+2] = (mathRandom.nextDouble() * 255).toInt();
-                fillPix[i+3] = 100;
+                fillPix[i+3] = shapePixs[i];
             }
         } else {
             throw "mask must have the same dimensions as image.";
@@ -970,10 +967,12 @@ class Drawlite {
         this._drawTimer = Timer.periodic(Duration(milliseconds: (1000 / this._targetFPS).round()), DrawliteUpdate);
     }
 
-    double frameRate(num r) {
-        this._targetFPS = r;
-        this.noLoop();
-        this.loop();
+    double frameRate([num? r]) {
+        if (r != null) {
+            this._targetFPS = r;
+            this.noLoop();
+            this.loop();
+        }
         return this.FPS;
     }
 
@@ -1212,55 +1211,59 @@ class Drawlite {
 
         var i;
         if (shapePathType == UNDEFINED) {
-            ctx.beginPath();
-            var isSplineCurve = false;
-            for (i = 0; i < shapePath.length; i++) {
-                if (shapePath[i].$1 == SPLINE_VERTEX_NODE) {
-                    isSplineCurve = true;
-                    break;
-                }
-            }
-            if (isSplineCurve && shapePath.length > 3) {
-                // improved from Processing.js source
-                var s = 1 - _splineTightness;
-                ctx.moveTo(shapePath[1].$2[0], shapePath[1].$2[1]);
-                for (i = 1; i < shapePath.length - 2; i++) {
-                    final cachedPrev = shapePath[i-1].$2;
-                    final cachedPt = shapePath[i].$2;
-                    final cachedNext = shapePath[i+1].$2;
-                    final cachedNextNext = shapePath[i+2].$2;
-                    ctx.bezierCurveTo(
-                        cachedPt[0] + (s * cachedNext[0] - s * cachedPrev[0]) / 6,
-                        cachedPt[1] + (s * cachedNext[1] - s * cachedPrev[1]) / 6,
-                        cachedNext[0] + (s * cachedPt[0] - s * cachedNextNext[0]) / 6,
-                        cachedNext[1] + (s * cachedPt[1] - s * cachedNextNext[1]) / 6,
-                        cachedNext[0],
-                        cachedNext[1]
-                    );
-                }
-            } else {
-                final moveToArgs = shapePath[0].$2;
-                ctx.moveTo(moveToArgs[0], moveToArgs[1]);
-                for (i = 1; i < shapePath.length; i++) {
-                    final node = shapePath[i];
-                    final args = node.$2;
-                    switch (node.$1) {
-                        case VERTEX_NODE_:
-                            ctx.lineTo(args[0], args[1]);
-                            break;
-                        case CURVE_VERTEX_NODE_:
-                            ctx.quadraticCurveTo(args[0], args[1], args[2], args[3]);
-                            break;
-                        case BEZIER_VERTEX_NODE_:
-                            ctx.bezierCurveTo(args[0], args[1], args[2], args[3], args[4], args[5]);
-                            break;
+            void doPath() {
+                ctx.beginPath();
+                var isSplineCurve = false;
+                for (i = 0; i < shapePath.length; i++) {
+                    if (shapePath[i].$1 == SPLINE_VERTEX_NODE) {
+                        isSplineCurve = true;
+                        break;
                     }
                 }
+                if (isSplineCurve && shapePath.length > 3) {
+                    // improved from Processing.js source
+                    var s = 1 - _splineTightness;
+                    ctx.moveTo(shapePath[1].$2[0], shapePath[1].$2[1]);
+                    for (i = 1; i < shapePath.length - 2; i++) {
+                        final cachedPrev = shapePath[i-1].$2;
+                        final cachedPt = shapePath[i].$2;
+                        final cachedNext = shapePath[i+1].$2;
+                        final cachedNextNext = shapePath[i+2].$2;
+                        ctx.bezierCurveTo(
+                            cachedPt[0] + (s * cachedNext[0] - s * cachedPrev[0]) / 6,
+                            cachedPt[1] + (s * cachedNext[1] - s * cachedPrev[1]) / 6,
+                            cachedNext[0] + (s * cachedPt[0] - s * cachedNextNext[0]) / 6,
+                            cachedNext[1] + (s * cachedPt[1] - s * cachedNextNext[1]) / 6,
+                            cachedNext[0],
+                            cachedNext[1]
+                        );
+                    }
+                } else {
+                    final moveToArgs = shapePath[0].$2;
+                    ctx.moveTo(moveToArgs[0], moveToArgs[1]);
+                    for (i = 1; i < shapePath.length; i++) {
+                        final node = shapePath[i];
+                        final args = node.$2;
+                        switch (node.$1) {
+                            case VERTEX_NODE_:
+                                ctx.lineTo(args[0], args[1]);
+                                break;
+                            case CURVE_VERTEX_NODE_:
+                                ctx.quadraticCurveTo(args[0], args[1], args[2], args[3]);
+                                break;
+                            case BEZIER_VERTEX_NODE_:
+                                ctx.bezierCurveTo(args[0], args[1], args[2], args[3], args[4], args[5]);
+                                break;
+                        }
+                    }
+                }
+
+                if (mode == CLOSE) ctx.closePath();
             }
-
-            if (mode == CLOSE) ctx.closePath();
-
+            
+            doPath();
             if (fillClr != null) ctx.fill();
+            doPath();
             if (strokeClr != null) ctx.stroke();
         } else if (shapePathType == POINTS) {
             for (i = 0; i < shapePath.length; i++) {
