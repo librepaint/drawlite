@@ -1325,28 +1325,26 @@ class Drawlite {
         endShape();
     }
 
-    Object snip([num? x, num? y, num? w, num? h]) {
+    DLImage snip([num? x, num? y, num? w, num? h]) {
         if (x == null) {
             x = 0;
             y = 0;
             w = this.width;
             h = this.height;
-        } else if (w == null) {
-            w = 1;
-            h = 1;
         }
 
-        if (y == null || h == null) {
-            throw "Drawlite.snip y, h cannot be null";
+        if (y == null || h == null || w == null) {
+            throw "Drawlite.snip args cannot be null";
         }
 
-        var snipImgData = ctx.getImageData(x, y, w, h);
-        if (w == 1 && h == 1) {
-            final d = snipImgData.data;
-            return new Color(d[0], d[1], d[2], d[3]);
-        }
-
+        final snipImgData = ctx.getImageData(x, y, w, h);
         return new DLImage(snipImgData);
+    }
+
+    Color getColor(num x, num y) {
+        final snipImgData = ctx.getImageData(x, y, 1, 1);
+        final d = snipImgData.data;
+        return new Color(d[0], d[1], d[2], d[3]);
     }
 
     void imageMode(int mode) {
@@ -1700,31 +1698,36 @@ class Drawlite {
         if (strokeClr != null)
             ctx.strokeStyle = CSSColor(strokeClr.r, strokeClr.g, strokeClr.b, strokeClr.a / 255);
 
-        ctx.beginPath();
+        void pathIt() {
+            ctx.beginPath();
 
-        switch (_curEllipseMode) {
-            case CENTER_:
-                ctx.ellipse(x, y, w / 2, h / 2, 0, 0, TWO_PI);
-                break;
-            case RADIUS_:
-                ctx.ellipse(x, y, w, h, 0, 0, TWO_PI);
-                break;
-            case CORNER_:
-                w /= 2;
-                h /= 2;
-                ctx.ellipse(w + x, h + y, w, h, 0, 0, TWO_PI);
-                break;
-            case CORNERS_:
-                w = (w - x) / 2;
-                h = (h - y) / 2;
-                ctx.ellipse(w / 2 + x, h / 2 + y, w, h, 0, 0, TWO_PI);
-                break;
-            default: // defaults to CENTER
-                ctx.ellipse(x, y, w / 2, h / 2, 0, 0, TWO_PI);
-                break;
+            switch (_curEllipseMode) {
+                case CENTER_:
+                    ctx.ellipse(x, y, w / 2, h / 2, 0, 0, TWO_PI);
+                    break;
+                case RADIUS_:
+                    ctx.ellipse(x, y, w, h, 0, 0, TWO_PI);
+                    break;
+                case CORNER_:
+                    w /= 2;
+                    h /= 2;
+                    ctx.ellipse(w + x, h + y, w, h, 0, 0, TWO_PI);
+                    break;
+                case CORNERS_:
+                    w = (w - x) / 2;
+                    h = (h - y) / 2;
+                    ctx.ellipse(w / 2 + x, h / 2 + y, w, h, 0, 0, TWO_PI);
+                    break;
+                default: // defaults to CENTER
+                    ctx.ellipse(x, y, w / 2, h / 2, 0, 0, TWO_PI);
+                    break;
+            }
         }
+        pathIt();
 
         if (fillClr != null) ctx.fill();
+
+        pathIt(); // TODO: figure out why I have to repeat this
         if (strokeClr != null) ctx.stroke();
     }
 

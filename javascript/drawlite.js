@@ -1001,18 +1001,15 @@ var Drawlite = function (canvas, callback) {
             y = 0;
             w = D.width;
             h = D.height;
-        } else if (w === undef) {
-            w = 1;
-            h = 1;
         }
-
-        let snipImgData = ctx.getImageData(x, y, w, h);
-        if (w === 1 && h === 1) {
-            let d = snipImgData.data;
-            return new Color(d[0], d[1], d[2], d[3]);
-        }
-
+        const snipImgData = ctx.getImageData(x, y, w, h);
         return new DLImage(snipImgData);
+    },
+
+    getColor = (x, y) => {
+        const snipImgData = ctx.getImageData(x, y, 1, 1);
+        const d = snipImgData.data;
+        return new Color(d[0], d[1], d[2], d[3]);
     },
 
     imageMode = mode => {
@@ -1517,6 +1514,7 @@ var Drawlite = function (canvas, callback) {
         endShape,
         spline,
         snip,
+        getColor,
         imageMode,
         image,
         loadImage,
