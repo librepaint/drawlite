@@ -1168,7 +1168,7 @@ var Drawlite = function (canvas, callback) {
         ctx.beginPath();
         ctx.arc(x, y, curStrokeWeight / 2, 0, TWO_PI);
 
-        curFill && ctx.fill();
+        curStroke && ctx.fill();
     },
 
     line = (ax, ay, bx, by) => {
