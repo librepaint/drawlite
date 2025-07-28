@@ -40,3 +40,9 @@ void main() {
 
 ## Documentation
 View the documentation in the `docs.md` file.
+
+## Dependencies
+The Dart version of drawlite uses [jvbuild](https://github.com/vExcess/jvbuild) to manage its dependencies. Install jvbuild and run `jvbuild get`.
+
+## Demo
+Run the demo via `jvbuild run demo`.

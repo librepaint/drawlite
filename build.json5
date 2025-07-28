@@ -1,0 +1,27 @@
+{
+    name: "drawlite",
+    description: "A lightweight yet powerful cross platform graphics library inspired by Processing",
+    author: "VExcess <github.com/vexcess>",
+    repository: "https://github.com/librepaint/drawlite",
+
+    modules: {
+        drawlite_dart: {
+            type: "dart:lib",
+            root: "dart",
+            dependencies: [
+                "dcanvas",
+            ],
+        },
+
+        drawlite_js: {
+            type: "javascript:lib",
+            root: "javascript",
+        },
+
+        // import dcanvas + deps
+        $importAll: [{
+            local: "../dcanvas",
+            remote: "https://github.com/librepaint/dcanvas"
+        }]
+    }
+}

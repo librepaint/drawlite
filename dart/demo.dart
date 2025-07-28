@@ -9,53 +9,7 @@ import 'package:drawlite/dl.dart';
 void main() {
     var canvas = Canvas(400, 400);
     Drawlite dl = Drawlite(canvas);
-    // initDl(dl);
-
-    CENTER = dl.CENTER;
-    CORNER = dl.CORNER;
-    BASELINE = dl.BASELINE;
-    CLOSE = dl.CLOSE;
-    HSB = dl.HSB;
-    RGB = dl.RGB;
-
-    map = dl.map;
-    sin = dl.sin;
-    cos = dl.cos;
-    radians = dl.radians;
-    random = dl.random;
-    floor = dl.floor;
-
-    fill = dl.fill;
-    noFill = dl.noFill;
-    stroke = dl.stroke;
-    noStroke = dl.noStroke;
-    rect = dl.rect;
-    rectMode = dl.rectMode;
-    pushMatrix = dl.pushMatrix;
-    popMatrix = dl.popMatrix;
-    scale = dl.scale;
-    text = dl.text;
-    textAlign = dl.textAlign;
-    font = dl.font;
-    strokeWeight = dl.strokeWeight;
-    textWidth = dl.textWidth;
-    color = dl.color;
-    translate = dl.translate;
-    rotate = dl.rotate;
-    line = dl.line;
-    arc = dl.arc;
-    beginShape = dl.beginShape;
-    vertex = dl.vertex;
-    curveVertex = dl.curveVertex;
-    bezierVertex = dl.bezierVertex;
-    endShape = dl.endShape;
-    ellipse = dl.ellipse;
-    triangle = dl.triangle;
-    quad = dl.quad;
-    background = dl.background;
-    colorMode = dl.colorMode;
-
-    get = dl.get;
+    globalizeDL(dl);
 
     background(0, 0, 0, 0);
     translate(200, 200);

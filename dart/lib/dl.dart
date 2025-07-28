@@ -5,6 +5,10 @@ export './drawlite.dart' show GetObject;
 late int CENTER;
 late int CORNER;
 late int BASELINE;
+late int BOTTOM;
+late int TOP;
+late int LEFT;
+late int RIGHT;
 late int CLOSE;
 late int HSB;
 late int RGB;
@@ -32,6 +36,7 @@ late void Function(num w, [num? h]) scale;
 late void Function(dynamic tObj, num x, num y, [num? w, num? h]) text;
 late void Function(int xAlign, [int yAlign]) textAlign;
 late void Function(String f, [num? sz]) font;
+late void Function(num sz) textSize;
 late void Function(num w) strokeWeight;
 late double Function(String str) textWidth;
 late Color Function(num r, [num? g, num? b, num a]) color;
@@ -64,6 +69,72 @@ late void Function(int mode) imageMode;
 // get object
 late GetObject get;
 
-void initDl(Drawlite dl) {
-    
+void globalizeDL(Drawlite dl) {
+    // constants
+    CENTER = dl.CENTER;
+    CORNER = dl.CORNER;
+    BASELINE = dl.BASELINE;
+    BOTTOM = dl.BOTTOM;
+    TOP = dl.TOP;
+    LEFT = dl.LEFT;
+    RIGHT = dl.RIGHT;
+    CLOSE = dl.CLOSE;
+    HSB = dl.HSB;
+    RGB = dl.RGB;
+
+    // Math functions
+    map = dl.map;
+    sin = dl.sin;
+    cos = dl.cos;
+    radians = dl.radians;
+    random = dl.random;
+    floor = dl.floor;
+    constrain = dl.constrain;
+
+    // methods
+    fill = dl.fill;
+    noFill = dl.noFill;
+    stroke = dl.stroke;
+    noStroke = dl.noStroke;
+    point = dl.point;
+    rect = dl.rect;
+    rectMode = dl.rectMode;
+    pushMatrix = dl.pushMatrix;
+    popMatrix = dl.popMatrix;
+    scale = dl.scale;
+    text = dl.text;
+    textAlign = dl.textAlign;
+    font = dl.font;
+    textSize = dl.textSize;
+    strokeWeight = dl.strokeWeight;
+    textWidth = dl.textWidth;
+    color = dl.color;
+    translate = dl.translate;
+    rotate = dl.rotate;
+    line = dl.line;
+    arc = dl.arc;
+    beginShape = dl.beginShape;
+    vertex = dl.vertex;
+    curveVertex = dl.curveVertex;
+    bezierVertex = dl.bezierVertex;
+    endShape = dl.endShape;
+    ellipse = dl.ellipse;
+    triangle = dl.triangle;
+    quad = dl.quad;
+    background = dl.background;
+    colorMode = dl.colorMode;
+    noLoop = dl.noLoop;
+    textAscent = dl.textAscent;
+    textDescent = dl.textDescent;
+    resetMatrix = dl.resetMatrix;
+    bezier = dl.bezier;
+    circle = dl.circle;
+    lerpColor = dl.lerpColor;
+    snip = dl.snip;
+    image = dl.image;
+    frameRate = dl.frameRate;
+    imageMode = dl.imageMode;
+
+    // get object
+    get = dl.get;
 }

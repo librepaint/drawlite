@@ -110,11 +110,11 @@ class TextMetrics {
 }
 
 class Color {
-    static fromInt(int num) {
+    static Color fromInt(int num) {
         return new Color(num & 255, num >> 8 & 255, num >> 16 & 255, num >> 24);
     }
 
-    List<int> fromHex(String hex) {
+    static List<int> fromHex(String hex) {
         hex = hex.replaceFirst("#", "");
         if (hex.length == 3) {
             final a = hex[0],
@@ -135,12 +135,12 @@ class Color {
         return list;
     }
 
-    static fromString(str) {
+    static Color fromString(str) {
         final bytes = str.slice(str.indexOf("(")+1, str.length-1).split(",");
         return new Color(bytes[0], bytes[1], bytes[2], bytes[3]);
     }
 
-    static RGBtoHSB(num r, num g, num b) {
+    static List<double> RGBtoHSB(num r, num g, num b) {
         // https://www.30secondsofcode.org/js/s/rgb-to-hsb
         r = r / 255;
         g = g / 255;
@@ -161,7 +161,7 @@ class Color {
                 }
             }
         }
-        return [60 * (h < 0 ? h + 6 : h), v == 0 ? 0 : (n / v) * 100, v * 100];
+        return [60.0 * (h < 0 ? h + 6 : h), v == 0 ? 0 : (n / v) * 100, v * 100];
     }
 
     static List<int> HSBtoRGB(num h, num s, num b) {
@@ -200,9 +200,9 @@ class Color {
         return t;
     }
 
-    static Color fromHSB(num r, num g, num b, [num a=255]) {
+    static Color fromHSB(num h, num s, num b, [num a=255]) {
         final t = Color();
-        final c = Color.HSBtoRGB(r, g, b);
+        final c = Color.HSBtoRGB(h, s, b);
         t.r = c[0];
         t.g = c[1];
         t.b = c[2];
@@ -242,7 +242,7 @@ class Color {
         return this.a == 255 ? "rgb(${this.r.toInt()},${this.g.toInt()},${this.b.toInt()})" : "rgba(${this.r.toInt()},${this.g.toInt()},${this.b.toInt()},${this.a/255})";
     }
 
-    Color toHSB() {
+    List<double> toHSB() {
         return Color.RGBtoHSB(this.r, this.g, this.b);
     }
 }
@@ -705,7 +705,14 @@ class Drawlite {
         }
 
         void on_mousedown(MouseEvent e) {
-            this.mouseButton = [LEFT, CENTER, RIGHT][e.which - 1];
+            final MOUSE_BUTTONS = [LEFT, CENTER, RIGHT];
+            final mouseBtnIdx = e.which - 1;
+            if (mouseBtnIdx < MOUSE_BUTTONS.length) {
+                this.mouseButton = MOUSE_BUTTONS[mouseBtnIdx];
+                this.get.mouseButton = this.mouseButton;
+            } else {
+                // fancy gaming mouse buttons
+            }
             this.mouseIsPressed = true;
             if (this.mousePressed != null) this.mousePressed!(e);
         }
