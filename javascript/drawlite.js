@@ -1637,8 +1637,8 @@ var Drawlite = function (canvas, callback) {
     canvas.addEventListener("mousemove", e => {
         D.pmouseX = D.mouseX;
         D.pmouseY = D.mouseY;
-        D.mouseX = e.clientX;
-        D.mouseY = e.clientY;
+        D.mouseX = e.offsetX;
+        D.mouseY = e.offsetY;
 
         if (D.mouseMoved) D.mouseMoved(e);
         if (D.mouseIsPressed && D.mouseDragged) D.mouseDragged(e);
