@@ -191,7 +191,7 @@ var Drawlite = function (canvas, callback) {
             if (imgData.width === this.width && imgData.height === this.height) {
                 let shapePixs = imgData.data;
                 for (var i = 3, len = fillPix.length; i < len; i += 4) {
-                    fillPix[i+3] = shapePixs[i];
+                    fillPix[i] = shapePixs[i];
                 }
             } else {
                 throw "mask must have the same dimensions as image.";
