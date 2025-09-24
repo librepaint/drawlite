@@ -1017,6 +1017,17 @@ var Drawlite = function (canvas, callback) {
     },
 
     image = (img, x, y, w, h) => {
+        if (typeof img.sourceImage === "object") {
+            img = img.sourceImage;
+        } else if (typeof img.canvas === "object") {
+            img = img.canvas;
+        }
+
+        if (w === undef) {
+            w = img.width;
+            h = img.height;
+        }
+
         switch (curImgMode) {
             case CENTER:
                 x -= w / 2;
@@ -1027,16 +1038,8 @@ var Drawlite = function (canvas, callback) {
                 h -= y;
                 break;
         }
-        if (typeof img.sourceImage === "object") {
-            img = img.sourceImage;
-        } else if (typeof img.canvas === "object") {
-            img = img.canvas;
-        }
-        if (w === undef) {
-            ctx.drawImage(img, x, y);
-        } else {
-            ctx.drawImage(img, x, y, w, h);
-        }
+
+        ctx.drawImage(img, x, y, w, h);
     },
 
     loadImage = (src, callback) => {

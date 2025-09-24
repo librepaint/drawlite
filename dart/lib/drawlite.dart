@@ -1360,15 +1360,20 @@ class Drawlite {
 
     void image(Object img, num x, num y, [num? w, num? h]) {
         if (img is DLImage) {
-            w = img.width;
-            h = img.height;
+            if (w == null || h == null) {
+                w = img.width;
+                h = img.height;
+            }
             img = img.sourceImage;
         } else if (img is Canvas) {
-            w = img.width;
-            h = img.height;
+            if (w == null || h == null) {
+                w = img.width;
+                h = img.height;
+            }
         } else {
             throw "Drawlite.image incorrect arguments recieved";
         }
+
         switch (_curImgMode) {
             case CENTER_:
                 x -= w / 2;
@@ -1379,6 +1384,7 @@ class Drawlite {
                 h -= y;
                 break;
         }
+        
         ctx.drawImage(img as Canvas, x, y, w, h);
     }
 
