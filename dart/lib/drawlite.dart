@@ -1245,7 +1245,7 @@ class Drawlite {
                             cachedNext[1]
                         );
                     }
-                } else {
+                } else if (shapePath.length > 0) {
                     final moveToArgs = shapePath[0].$2;
                     ctx.moveTo(moveToArgs[0], moveToArgs[1]);
                     for (i = 1; i < shapePath.length; i++) {

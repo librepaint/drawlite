@@ -906,7 +906,7 @@ var Drawlite = function (canvas, callback) {
                             cachedNext[1]
                         );
                     }
-                } else {
+                } else if (shapePath.length > 0) {
                     ctx.moveTo(...shapePath[0][1]);
                     for (i = 1; i < shapePath.length; i++) {
                         let node = shapePath[i];
