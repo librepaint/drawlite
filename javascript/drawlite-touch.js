@@ -22,7 +22,7 @@
     Touch.point_point = function(px, py, p2x, p2y) {
         return px === p2x && py === p2y;
     };
-    Touch.point_line = function(x1, y1, x2, y2, px, py) {
+    Touch.point_line = function(px, py, x1, y1, x2, y2) {
         var a, b;
         
         a = x2 - x1;
@@ -137,8 +137,8 @@
 
     
 
-    Touch.line_point = function(px, py, x1, y1, x2, y2) {
-        return Touch.point_line(x1, y1, x2, y2, px, py);
+    Touch.line_point = function(x1, y1, x2, y2, px, py) {
+        return Touch.point_line(px, py, x1, y1, x2, y2);
     };
     Touch.line_line = function line_line(a, b, c, d, p, q, r, s) {
         var det, gamma, lambda;
