@@ -2,7 +2,7 @@
     name: "drawlite",
     description: "A lightweight yet powerful cross platform graphics library inspired by Processing",
     author: "VExcess <github.com/vexcess>",
-    repository: "https://github.com/librepaint/drawlite",
+    repository: "https://github.com/microslop-mirror/drawlite",
 
     modules: {
         drawlite_dart: {
@@ -21,7 +21,7 @@
         // import dcanvas + deps
         $importAll: [{
             local: "../dcanvas",
-            remote: "https://github.com/librepaint/dcanvas"
+            remote: "https://github.com/microslop-mirror/dcanvas"
         }]
     }
 }

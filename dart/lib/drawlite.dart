@@ -28,7 +28,19 @@ import 'dart:typed_data';
 import "package:dcanvas/dcanvas.dart";
 import 'package:dcanvas/backend/Window.dart';
 
-export 'package:dcanvas/backend/Window.dart' show Event, MouseEvent, KeyboardEvent, QuitEvent;
+export 'package:dcanvas/backend/Window.dart' show EventType, Event, MouseEvent, KeyboardEvent, QuitEvent, Key;
+
+class KeyState {
+    static bool isShiftPressed() {
+        final state = keyboardState();
+        return state & KeyboardStateMasks.LeftShift != 0 || state & KeyboardStateMasks.RightShift != 0;
+    }
+
+    static bool isCtrlPressed() {
+        final state = keyboardState();
+        return state & KeyboardStateMasks.LeftCtrl != 0 || state & KeyboardStateMasks.RightCtrl != 0;
+    }
+}
 
 final mathRandom = Math.Random();
 
@@ -114,7 +126,7 @@ class Color {
         return new Color(num & 255, num >> 8 & 255, num >> 16 & 255, num >> 24);
     }
 
-    static List<int> fromHex(String hex) {
+    static Color fromHex(String hex) {
         hex = hex.replaceFirst("#", "");
         if (hex.length == 3) {
             final a = hex[0],
@@ -123,7 +135,7 @@ class Color {
             hex = a+a + b+b + c+c;
         }
         var num = int.parse(hex, radix: 16);
-        if (num < 0xffffff) {
+        if (num <= 0xffffff) {
             num = (num << 8) | 0xff;
         }
         Uint8List list = Uint8List(4)
@@ -132,7 +144,7 @@ class Color {
                 num,
                 Endian.big,
             );
-        return list;
+        return Color.fromRGB(list[0], list[1], list[2], list[3]);
     }
 
     static Color fromString(str) {
@@ -543,7 +555,8 @@ class EventCallbacks {
     late void Function(MouseEvent) mousedown;
     late void Function(MouseEvent) mouseup;
     late void Function(MouseEvent) mousemove;
-
+    late void Function(MouseEvent) mousescroll;
+    
     late void Function(KeyboardEvent) keydown;
     late void Function(KeyboardEvent) keyup;
 }
@@ -651,6 +664,7 @@ class Drawlite {
     void Function(MouseEvent)? mousePressed = null;
     void Function(MouseEvent)? mouseReleased = null;
     void Function(MouseEvent)? mouseMoved = null;
+    void Function(MouseEvent)? mouseScrolled = null;
     void Function(MouseEvent)? mouseDragged = null;
     void Function(KeyboardEvent)? keyPressed = null;
     void Function(KeyboardEvent)? keyReleased = null;
@@ -723,10 +737,13 @@ class Drawlite {
         void on_mousemove(MouseEvent e) {
             this.pmouseX = this.mouseX;
             this.pmouseY = this.mouseY;
-            this.mouseX = e.clientX;
-            this.mouseY = e.clientY;
+            this.mouseX = e.mouseX;
+            this.mouseY = e.mouseY;
             if (this.mouseMoved != null) this.mouseMoved!(e);
             if (this.mouseIsPressed && this.mouseDragged != null) this.mouseDragged!(e);
+        }
+        void on_mousescroll(MouseEvent e) {
+            if (this.mouseScrolled != null) this.mouseScrolled!(e);
         }
 
         void on_keydown(KeyboardEvent e) {
@@ -746,6 +763,7 @@ class Drawlite {
         eventCallbacks.mousemove = on_mousemove;
         eventCallbacks.keydown = on_keydown;
         eventCallbacks.keyup = on_keyup;
+        eventCallbacks.mousescroll = on_mousescroll;
 
         // let ads = Drawlite.addons;
         // for (let i = 0; i < ads.length; i++) {
@@ -943,21 +961,23 @@ class Drawlite {
             "fangsong"
         ];
 
+        // TODO: support non-integer font sizes
         if (genericFonts.contains(f)) {
-            return "${sz}px ${f}";
+            return "${sz.toInt()}px ${f}";
         } else {
-            return "${sz}px \"${f}\", sans-serif";
+            return "${sz.toInt()}px \"${f}\", sans-serif";
         }
     }
 
 
     // MORE STATIC VARIABLES
     void size(num w, num h) {
-    //     D.width = canvas.width = w;
-    //     D.height = canvas.height = h;
-    //     font(curFontName, curFontSize);
-    //     D.imageData = ctx.getImageData(0, 0, D.width, D.height);
-    //     updateDynamics();
+        this.width = w.toInt();
+        this.height = h.toInt();
+        this.canvas.resize(this.width, this.height);
+        font(this._curFontName, this._curFontSize);
+        // this.imageData = ctx.getImageData(0, 0, D.width, D.height);
+        updateDynamics();
     }
 
     void angleMode(int m) {
@@ -1443,7 +1463,7 @@ class Drawlite {
         return _curTxtDescent;
     }
 
-    num textLeading(num? n) {
+    num textLeading([num? n]) {
         if (n != null)
             _curTxtLeading = n.toDouble();
         return _curTxtLeading;

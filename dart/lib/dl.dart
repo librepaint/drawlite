@@ -20,7 +20,9 @@ late double Function(num a) cos;
 late double Function(num d) radians;
 late double Function([num a, num? b]) random;
 late num Function(num n) floor;
+late num Function(num n) round;
 late num Function(num n, num min, num max) constrain;
+late num Function(num n) abs;
 
 // methods
 late void Function(Object r, [num? g, num? b, num? a]) fill;
@@ -33,12 +35,8 @@ late void Function(int m) rectMode;
 late void Function() pushMatrix;
 late void Function() popMatrix;
 late void Function(num w, [num? h]) scale;
-late void Function(dynamic tObj, num x, num y, [num? w, num? h]) text;
-late void Function(int xAlign, [int yAlign]) textAlign;
 late void Function(String f, [num? sz]) font;
-late void Function(num sz) textSize;
 late void Function(num w) strokeWeight;
-late double Function(String str) textWidth;
 late Color Function(num r, [num? g, num? b, num a]) color;
 late void Function(num x, num y) translate;
 late void Function(num a) rotate;
@@ -55,8 +53,13 @@ late void Function(num x1, num y1, num x2, num y2, num x3, num y3, num x4, num y
 late void Function(Object r, [num? g, num? b, num? a]) background;
 late void Function(int m) colorMode;
 late void Function() noLoop;
+late void Function(num sz) textSize;
+late void Function(int xAlign, [int yAlign]) textAlign;
+late double Function(String str) textWidth;
 late num Function() textAscent;
 late num Function() textDescent;
+late num Function([num? n]) textLeading;
+late void Function(dynamic tObj, num x, num y, [num? w, num? h]) text;
 late void Function() resetMatrix;
 late void Function(num a, num b, num c, num d, num e, num f, num g, num h) bezier;
 late void Function(num x, num y, num d) circle;
@@ -65,6 +68,7 @@ late DLImage Function([num? x, num? y, num? w, num? h]) snip;
 late void Function(Object img, num x, num y, [num? w, num? h]) image;
 late double Function([num? r]) frameRate;
 late void Function(int mode) imageMode;
+late void Function (num w, num h) size;
 
 // get object
 late GetObject get;
@@ -89,7 +93,9 @@ void globalizeDL(Drawlite dl) {
     radians = dl.radians;
     random = dl.random;
     floor = dl.floor;
+    round = dl.round;
     constrain = dl.constrain;
+    abs = dl.abs;
 
     // methods
     fill = dl.fill;
@@ -102,12 +108,8 @@ void globalizeDL(Drawlite dl) {
     pushMatrix = dl.pushMatrix;
     popMatrix = dl.popMatrix;
     scale = dl.scale;
-    text = dl.text;
-    textAlign = dl.textAlign;
     font = dl.font;
-    textSize = dl.textSize;
     strokeWeight = dl.strokeWeight;
-    textWidth = dl.textWidth;
     color = dl.color;
     translate = dl.translate;
     rotate = dl.rotate;
@@ -124,8 +126,13 @@ void globalizeDL(Drawlite dl) {
     background = dl.background;
     colorMode = dl.colorMode;
     noLoop = dl.noLoop;
+    textSize = dl.textSize;
+    textAlign = dl.textAlign;
+    textWidth = dl.textWidth;
     textAscent = dl.textAscent;
     textDescent = dl.textDescent;
+    textLeading = dl.textLeading;
+    text = dl.text;
     resetMatrix = dl.resetMatrix;
     bezier = dl.bezier;
     circle = dl.circle;
@@ -134,6 +141,7 @@ void globalizeDL(Drawlite dl) {
     image = dl.image;
     frameRate = dl.frameRate;
     imageMode = dl.imageMode;
+    size = dl.size;
 
     // get object
     get = dl.get;
